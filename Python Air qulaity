@@ -1,0 +1,61 @@
+import pandas as pd
+
+
+
+# Read deaths data from the first CSV file
+deaths_df = pd.read_csv("Pnemonia_RSV_Infant.csv")
+
+# Read the Excel file into a DataFrame
+df_Air = pd.read_csv('WHOairquality2022.csv')
+
+# Now, you can work with the DataFrame (df)
+# For example, you can print the first few rows
+print(df_Air.head()) 
+
+# Perform the merge
+merged_data = pd.merge(df_Air, deaths_df, left_on=["Measurement Year", "Country"], right_on=["Year", "Country"])
+print(merged_data.head())
+
+import pandas as pd
+import matplotlib.pyplot as plt
+
+
+
+# Convert 'Measurement Year' column to datetime if it's not already
+merged_data['Measurement Year'] = pd.to_datetime(merged_data['Measurement Year'], format='%Y')
+
+# Define pollutants of interest
+pollutants = ['PM2.5 (μg/m3)', 'PM10 (μg/m3)', 'NO2 (μg/m3)']
+
+# Create separate plots for each pollutant
+for pollutant in pollutants:
+    # Group data by country and measurement year and calculate the mean pollutant value
+    grouped = merged_data.groupby(['Country', 'Measurement Year'])[pollutant].mean().reset_index()
+
+    # Find the top countries with the highest pollutant values
+    top_countries = grouped.groupby('Country')[pollutant].mean().nlargest(5).index
+
+    # Filter the data for the top countries
+    filtered_data = grouped[grouped['Country'].isin(top_countries)]
+
+    # Create a separate plot for each top country
+    plt.figure(figsize=(12, 6))  # Adjust the figure size as needed
+
+    for country in top_countries:
+        country_data = filtered_data[filtered_data['Country'] == country]
+        plt.plot(country_data['Measurement Year'], country_data[pollutant], marker='o', label=country)
+
+    plt.title(f'{pollutant} Over Time in Top Countries')
+    plt.xlabel('Measurement Year')
+    plt.ylabel(f'{pollutant}')
+    plt.legend()
+    plt.grid(True)
+
+    # Optionally, customize the date format on the x-axis if needed
+    plt.gca().xaxis.set_major_formatter(plt.matplotlib.dates.DateFormatter('%Y-%m-%d'))
+    plt.gca().xaxis.set_major_locator(plt.matplotlib.dates.YearLocator())  # Show year intervals
+
+    plt.xticks(rotation=45)  # Rotate x-axis labels for better readability
+
+    plt.tight_layout()
+    plt.show()
