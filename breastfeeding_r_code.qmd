@@ -1,0 +1,222 @@
+---
+title: "Data Science Project"
+author: "Julissa Martinez"
+format: html
+---
+
+## Coding for Data Science Project 
+
+
+```{r}
+
+# loading in libraries necessary 
+library(readr)
+library(stats)
+library(gt)
+library(broom)
+library(tidyverse)
+
+# reading in the mortality data found on kaggle.com 
+death_vs_survival <- read_csv(
+  "/Users/julissamartinez/Desktop/Children-woman-death-vs-survival.csv")
+
+# reading in breastfeeding data found on kaggle.com 
+breastfeeding <- read_csv(
+  "/Users/julissamartinez/Desktop/exclusive-breastfeeding.csv")
+
+
+```
+
+You can add options to executable code like this 
+
+```{r}
+
+# combining data by three specific columns 
+merged_df <- inner_join(
+  death_vs_survival, breastfeeding, by = c("Code", "Year", "Entity"))
+
+# print the merged data frame
+print(merged_df)
+
+# renaming columns for easier use and uniformity 
+bxd_df <- merged_df %>%
+  rename(die_bef_5 = 
+           `Children that died before 5 years of age per woman (based on Gapminder (2017))` 
+         ) %>%
+  rename(surv_aft_5 = 
+           `Children that survived past 5 years of age per woman (based on Gapminder (2017))`
+         )  %>%
+  rename(exc_breast_perc = 'Exclusive breastfeeding percent' ) %>% 
+  rename(entity = 'Entity') %>% 
+  rename(code = "Code") %>% 
+  rename(year = 'Year')
+
+
+```
+
+
+
+
+```{r}
+
+fig_bubble <-
+  ggplot(data = bxd_df) +
+  theme_bw() +
+  aes(
+    x = exc_breast_perc,
+    y = die_bef_5,
+  ) +
+  labs(
+    title = "Relationship b/w the percentage of exclusive 
+    breastfeeding percent total child deaths before 5 per woman",
+    x = "Exclusive breastfeeding percentage",
+    y = "Child deaths before 5 years old per woman",
+    caption = "Source: Kaggle"
+  ) +
+  geom_point(alpha = 0.5) 
+
+fig_bubble
+
+```
+
+```{r}
+
+
+fig_bubble_2005 <-
+  ggplot(filter(bxd_df, year == 2005)) +
+  theme_bw() +
+  aes(
+    x = exc_breast_perc,
+    y = die_bef_5,
+    color = entity
+  ) +
+  labs(
+    title = "Relationship b/w the percentage of exclusive 
+    breastfeeding percent total child deaths before 5 per woman in 2005",
+    x = "Exclusive breastfeeding percentage",
+    y = "Child deaths before 5 years old per woman",
+    color = "Country",
+    caption = "Source: Kaggle"
+  ) +
+  geom_point(alpha = 0.5) 
+
+fig_bubble_2005
+
+
+
+```
+
+
+```{r}
+
+fig_bubble_1986 <-
+  ggplot(filter(bxd_df, year == 1986)) +
+  theme_bw() +
+  aes(
+    x = exc_breast_perc,
+    y = die_bef_5,
+    color = entity
+  ) +
+  labs(
+    title = "Relationship b/w the percentage of exclusive 
+    breastfeeding percent total child deaths before 5 per woman in 1986",
+    x = "Exclusive breastfeeding percentage",
+    y = "Child deaths before 5 years old per woman",
+    color = "Country",
+    caption = "Source: Kaggle"
+  ) +
+  geom_point(alpha = 0.5) 
+
+fig_bubble_1986
+
+
+```
+
+
+```{r}
+
+fig_bubble_2016 <-
+  ggplot(filter(bxd_df, year == 2016)) +
+  theme_bw() +
+  aes(
+    x = exc_breast_perc,
+    y = die_bef_5,
+    color = entity
+  ) +
+  labs(
+    title = "Relationship b/w the percentage of exclusive 
+    breastfeeding percent total child deaths before 5 per woman in 2016",
+    x = "Exclusive breastfeeding percentage",
+    y = "Child deaths before 5 years old per woman",
+    color = "Country",
+    caption = "Source: Kaggle"
+  ) +
+  geom_point(alpha = 0.5) 
+
+fig_bubble_2016
+
+```
+
+
+
+```{r}
+
+# check for normality 
+shap_breast <- shapiro.test(bxd_df$exc_breast_perc)
+
+#create a table with data
+tab_block <- shap_breast %>% 
+  tidy() %>% 
+  gt()
+
+tab_block |>
+   tab_header(
+      title = "Normality Test",
+    )
+
+
+# check for normality 
+shap_die <- shapiro.test(bxd_df$die_bef_5)
+
+#create a table
+tab_block_die <- shap_die %>% 
+  tidy() %>% 
+  gt()
+
+tab_block_die |>
+   tab_header(
+      title = "Normality Test",
+    )
+
+
+```
+
+
+```{r}
+
+# fit a GLM with a specific family and link function
+glm_model <- glm(die_bef_5 ~ exc_breast_perc, 
+                 data = bxd_df,
+                 family = gaussian(link = "identity"))
+
+# summarize the model
+summary(glm_model)
+
+
+tab_block_glm <- glm_model %>% 
+  tidy() %>% 
+  gt()
+
+tab_block_glm |>
+   tab_header(
+      title = "GLM Output",
+    )
+
+
+
+# visualize the results or residuals
+plot(glm_model)
+
+
+```
+
